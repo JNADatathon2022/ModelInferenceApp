@@ -4,6 +4,7 @@ import random
 import gradio as gr
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import shap
 import xgboost as xgb
@@ -39,6 +40,12 @@ feature_names = [
 
 # Gradio predict function
 def predict(*args):
+    # Check if all the inputs are valid
+    for i, arg in enumerate(args):
+        # if arg is not empty
+        if not arg:
+            return 0
+    return np.random.random(1)[0]
     # Convert categorical inputs to one-hot encoding from feature_names
     df = pd.DataFrame(columns=feature_names)
     origin_port = int(mappings["origin_port"][args[0]])
@@ -114,19 +121,23 @@ with gr.Blocks() as demo:
                 # )
                 units = gr.Slider(
                     label="Units",
-                    max=1000,
+                    maximum=1000,
+                    step=1,
                 )
                 weight = gr.Slider(
                     label="Weight",
-                    max=1000,
+                    maximum=5000,
+                    step=1,
                 )
                 material_handling = gr.Slider(
                     label="Material Handling",
-                    max=5,
+                    maximum=5,
+                    step=1,
                 )
                 weight_class = gr.Slider(
                     label="Weight Class",
-                    max=5,
+                    maximum=5,
+                    step=1,
                 )
 
         with gr.Row():
