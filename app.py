@@ -45,7 +45,8 @@ def predict(*args):
         # if arg is not empty
         if not arg:
             return 0
-    return np.random.random(1)[0]
+
+    return 0.95 * int(args[6]) / 5000 + 0.1 * int(args[5]) / 10000
     # Convert categorical inputs to one-hot encoding from feature_names
     df = pd.DataFrame(columns=feature_names)
     origin_port = int(mappings["origin_port"][args[0]])
