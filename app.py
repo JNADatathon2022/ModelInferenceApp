@@ -1,3 +1,4 @@
+import json
 import random
 
 import gradio as gr
@@ -7,146 +8,69 @@ import pandas as pd
 import shap
 import xgboost as xgb
 
-MODEL_PATH = "xgb.h5"
+MODEL_PATH = "xgb1.h5"
 
 
 def load_model():
     xgb_model = xgb.XGBClassifier()
     xgb_model.load_model(MODEL_PATH)
+
+    # Print expected input of the model
+    print(xgb_model.get_booster().feature_names)
+
     return xgb_model
 
 
 model = load_model()
+mappings = json.load(open("mappings.json"))
 
 feature_names = [
-    "product_id",
+    "origin_port",
+    "pl",
+    "customs_procedures",
+    "logistic_hub",
+    "customer",
     "units",
     "weight",
     "material_handling",
     "weight_class",
-    "customer_Amsterdam",
-    "customer_Athens",
-    "customer_Barcelona",
-    "customer_Berlin",
-    "customer_Bordeaux",
-    "customer_Bremen",
-    "customer_Bucharest",
-    "customer_Budapest",
-    "customer_Cologne",
-    "customer_Copenhagen",
-    "customer_Hanover",
-    "customer_Helsinki",
-    "customer_Lisbon",
-    "customer_Lyon",
-    "customer_Madrid",
-    "customer_Malmö",
-    "customer_Marseille",
-    "customer_Milan",
-    "customer_Munich",
-    "customer_Naples",
-    "customer_Paris",
-    "customer_Porto",
-    "customer_Prague",
-    "customer_Rome",
-    "customer_Stockholm",
-    "customer_Turin",
-    "customer_Valencia",
-    "customer_Vienna",
-    "origin_port_Athens",
-    "origin_port_Barcelona",
-    "origin_port_Rotterdam",
-    "3pl_v_001",
-    "3pl_v_002",
-    "3pl_v_003",
-    "3pl_v_004",
-    "customs_procedures_CRF",
-    "customs_procedures_DTD",
-    "customs_procedures_DTP",
-    "logistic_hub_-1",
-    "logistic_hub_Bratislava",
-    "logistic_hub_Dusseldorf",
-    "logistic_hub_Hamburg",
-    "logistic_hub_Liege",
-    "logistic_hub_Lille",
-    "logistic_hub_Rome",
-    "logistic_hub_Venlo",
-    "logistic_hub_Warsaw",
-    "logistic_hub_Zaragoza",
-]
-
-customer_names = [
-    "customer_Amsterdam",
-    "customer_Athens",
-    "customer_Barcelona",
-    "customer_Berlin",
-    "customer_Bordeaux",
-    "customer_Bremen",
-    "customer_Bucharest",
-    "customer_Budapest",
-    "customer_Cologne",
-    "customer_Copenhagen",
-    "customer_Hanover",
-    "customer_Helsinki",
-    "customer_Lisbon",
-    "customer_Lyon",
-    "customer_Madrid",
-    "customer_Malmö",
-    "customer_Marseille",
-    "customer_Milan",
-    "customer_Munich",
-    "customer_Naples",
-    "customer_Paris",
-    "customer_Porto",
-    "customer_Prague",
-    "customer_Rome",
-    "customer_Stockholm",
-    "customer_Turin",
-    "customer_Valencia",
-    "customer_Vienna",
-]
-
-origin_port_names = [
-    "origin_port_Athens",
-    "origin_port_Barcelona",
-    "origin_port_Rotterdam",
-]
-
-logistic_hub_names = [
-    "logistic_hub_-1",
-    "logistic_hub_Bratislava",
-    "logistic_hub_Dusseldorf",
-    "logistic_hub_Hamburg",
-    "logistic_hub_Liege",
-    "logistic_hub_Lille",
-    "logistic_hub_Rome",
-    "logistic_hub_Venlo",
-    "logistic_hub_Warsaw",
-    "logistic_hub_Zaragoza",
-]
-
-customs_procedures_names = [
-    "customs_procedures_CRF",
-    "customs_procedures_DTD",
-    "customs_procedures_DTP",
 ]
 
 
 # Gradio predict function
 def predict(*args):
     # Convert categorical inputs to one-hot encoding from feature_names
-
     df = pd.DataFrame(columns=feature_names)
-    origin_port = args[0]
-    pl = args[1]
-    customs_procedures = args[2]
-    logistic_hub = args[3]
-    customer = args[4]
-    product_id = args[5]
-    units = args[6]
-    weight = args[7]
-    material_handling = args[8]
-    weight_class = args[9]
-    print(args)
+    origin_port = int(mappings["origin_port"][args[0]])
+    pl = int(mappings["3pl"][args[1]])
+    customs_procedures = int(mappings["customs_procedures"][args[2]])
+    logistic_hub = int(mappings["logistic_hub"][args[3]])
+    customer = int(mappings["customer"][args[4]])
+    units = args[5]
+    weight = args[6]
+    material_handling = args[7]
+    weight_class = args[8]
+
+    # Print type of each input with a for loop
+    for i, arg in enumerate(args):
+        print(f"{feature_names[i]}: {type(arg)}")
+
+    # Create a dataframe with the inputs
+    df = df.append(
+        {
+            "units": units,
+            "weight": weight,
+            "material_handling": material_handling,
+            "weight_class": weight_class,
+            "customer": customer,
+            "origin_port": origin_port,
+            "3pl": pl,
+            "customs_procedures": customs_procedures,
+            "logistic_hub": logistic_hub,
+        },
+        ignore_index=True,
+    )
+    print(df.info())
 
     # Get prediction
     pred = model.predict(df)[0]
@@ -155,23 +79,6 @@ def predict(*args):
 
     # Return prediction and probability
     return pred, prob
-
-
-def interpret(*args):
-    ...
-
-
-#     # Convert args to dataframe
-#     df = pd.DataFrame([args], columns=feature_names)
-#     # Get prediction
-#     pred = model.predict(df)[0]
-#     # Get probability
-#     prob = model.predict_proba(df)[0][pred]
-
-#     # Get SHAP values
-#     explainer = shap.TreeExplainer(model)
-
-#     # Return prediction and probability return pred, prob
 
 
 df = pd.read_csv("data/dataframefinal.csv", sep=",")
@@ -201,10 +108,10 @@ with gr.Blocks() as demo:
                     label="Customer",
                     choices=list(df.customer.unique()),
                 )
-                product_id = gr.Dropdown(
-                    label="Product ID",
-                    choices=list(str(df.product_id.unique())),
-                )
+                # product_id = gr.Dropdown(
+                #     label="Product ID",
+                #     choices=list(str(df.product_id.unique())),
+                # )
                 units = gr.Slider(
                     label="Units",
                     max=1000,
@@ -223,11 +130,8 @@ with gr.Blocks() as demo:
                 )
 
         with gr.Row():
-            with gr.Column():
-                predict_btn = gr.Button(value="Predict")
-                interpret_btn = gr.Button(value="Explain")
+            predict_btn = gr.Button(value="Predict")
             label = gr.Label()
-            plot = gr.Plot()
             predict_btn.click(
                 predict,
                 inputs=[
@@ -236,7 +140,7 @@ with gr.Blocks() as demo:
                     customs_procedures,
                     logistic_hub,
                     customer,
-                    product_id,
+                    # product_id,
                     units,
                     weight,
                     material_handling,
@@ -244,21 +148,4 @@ with gr.Blocks() as demo:
                 ],
                 outputs=[label],
             )
-            interpret_btn.click(
-                interpret,
-                inputs=[
-                    origin_port,
-                    pl,
-                    customs_procedures,
-                    logistic_hub,
-                    customer,
-                    product_id,
-                    units,
-                    weight,
-                    material_handling,
-                    weight_class,
-                ],
-                outputs=[plot],
-            )
-
 demo.launch()
