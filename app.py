@@ -35,29 +35,22 @@ feature_names = [
     "weight",
     "material_handling",
     "weight_class",
+    "product_id",
 ]
 
 
 # Gradio predict function
 def predict(*args):
-    # Check if all the inputs are valid
-    for i, arg in enumerate(args):
-        # if arg is not empty
-        if not arg:
-            return 0
-
-    return 0.95 * int(args[6]) / 5000 + 0.1 * int(args[5]) / 10000
-    # Convert categorical inputs to one-hot encoding from feature_names
     df = pd.DataFrame(columns=feature_names)
     origin_port = int(mappings["origin_port"][args[0]])
     pl = int(mappings["3pl"][args[1]])
     customs_procedures = int(mappings["customs_procedures"][args[2]])
     logistic_hub = int(mappings["logistic_hub"][args[3]])
     customer = int(mappings["customer"][args[4]])
-    units = args[5]
-    weight = args[6]
-    material_handling = args[7]
-    weight_class = args[8]
+    units = args[6]
+    weight = args[7]
+    material_handling = args[8]
+    weight_class = args[9]
 
     # Print type of each input with a for loop
     for i, arg in enumerate(args):
@@ -116,10 +109,9 @@ with gr.Blocks() as demo:
                     label="Customer",
                     choices=list(df.customer.unique()),
                 )
-                # product_id = gr.Dropdown(
-                #     label="Product ID",
-                #     choices=list(str(df.product_id.unique())),
-                # )
+                product_id = gr.Textbox(
+                    label="Product ID",
+                )
                 units = gr.Slider(
                     label="Units",
                     maximum=1000,
@@ -152,7 +144,7 @@ with gr.Blocks() as demo:
                     customs_procedures,
                     logistic_hub,
                     customer,
-                    # product_id,
+                    product_id,
                     units,
                     weight,
                     material_handling,
